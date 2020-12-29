@@ -1,0 +1,225 @@
+//两个小时的成果，嗯，爱了爱了
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include"one.h"//自己编头文件的快乐 ,里面有蛇的方向还有默认方向等等（利用枚举）
+#include<conio.h>//里面有个随机函数
+#include<windows.h>
+//#include<mmsystem.h>
+//#pragma comment (lib, "winmm.lib")//音乐所使用的动态链接库弄不了，唉
+#include<time.h>
+#define false -1
+#define true 1
+typedef int booleen;//驼峰命名法显得我很吊
+void FirstPage();// 首页
+//void MyMusic();(由于winmm.dll在vscode上加载不了，废弃)// 音乐
+void EnterGame();// 按回车进入游戏
+//void StopMusic();（同上）QAQ....）// 停止音乐
+void CleanScreen();// 清空页面
+void BackGround();// 背景基础
+void SetSnakePos();// 蛇的起始位置
+void GiveSnake();// 画蛇
+void MoveSnake();// 给蛇的位置赋值,也就是移动蛇。
+void DeleteSnake();// 删除蛇
+void ControlSnake();// 控制蛇
+booleen IsSnakeAlive();// 判断蛇是否死亡
+void ProduceFood();// 制造食物（用到随机函数）
+void LengthenSnake();// 蛇变长
+int main(){
+    FirstPage();
+    //MyMusic();
+    EnterGame();
+    //StopMusic();
+    CleanScreen();
+    SetSnakePos();//设置蛇的初始坐标
+    while (1)
+    {
+        ProduceFood();
+        DeleteSnake();
+        ControlSnake();
+        MoveSnake();
+        if(IsSnakeAlive()==false)
+        {
+            printf("emmm,你果然还是适合刷题！！");
+            break;
+        }
+        LengthenSnake();
+        GiveSnake();
+        BackGround();
+        Sleep(500);//Sleep以毫秒为单位，sleep好像是秒
+        system("cls");
+    }
+    
+    getchar();
+}
+void FirstPage()
+{
+    printf("\n\n\n\n\n\n");
+    printf("\t\t\t\t\t  欢迎来到贪吃蛇的世界,\n\n\n");
+    printf("\t\t\t\t\t 还行的    果然还是可以的\n\n\n");
+    printf("\t\t\t\t\t       狗蛋菜    \n\n\n" );
+    printf("\t\t\t\t\t W A S D 控制蛇前进后退\n\n\n");
+    printf("\t\t\t\t\t 按下ENTER键开始新游戏\n\n\n\n");
+}
+//void MyMusic(){
+    //PlaySound("1.wav",NULL,SND_FILENAME|SND_ASYNC);//实在不懂，百度词条学习法（第一次尝试，我是这么学的）
+    //使用PlaySound函数时需要在#include<windows.h>后面加上（注意：不能加在前面）
+    //#include <mmsystem.h>
+    //#pragma comment(lib, "WINMM.LIB")
+//}
+void EnterGame()
+{
+    while ('\r'!=_getch());//这个函数是一个不回显函数，当用户按下某个字符时，函数自动读取，无需按回车
+}
+void CleanScreen(){
+    system("cls");
+}
+void BackGround(){
+    
+    for (int i = 0; i < 20; i++)
+    {
+        printf("%s",MyBackGround[i]);//我的头文件里的背景二维字符串
+    }
+}
+void SetSnakePos(){
+    int x=-1;//行数
+    int y=-1;//列数
+    srand(time(NULL));
+    // srand函数是随机数发生器的初始化函数。原型：void srand(unsigned int seed);srand和rand()配合使用产生伪随机数序列。
+    //time() 函数返回当前系统时间 如果是空指针，直接返回当前时间
+    y = rand()%16+1;//用时间自己换算一下.伪随机的
+    x= rand()%16+1;//默认蛇是有三个格子
+    //特殊符号横向是两个，所以y向是变幻时都得乘二
+    ArrSnake[0][0]=x;
+    ArrSnake[0][1]=y*2;
+    ArrSnake[0][2]=go_east;
+
+    ArrSnake[1][0]=x;
+    ArrSnake[1][1]=y*2+2;
+    ArrSnake[1][2]=go_east;
+
+    ArrSnake[2][0]=x;
+    ArrSnake[2][1]=y*2+4;
+    ArrSnake[2][2]=go_east;
+}
+void GiveSnake(){
+    int i;
+    for (i = 0; ArrSnake[i][0]!=0; i++)//等于零就是碰到边界
+    {
+        strncpy(&MyBackGround[ArrSnake[i][0]][ArrSnake[i][1]],"■",2);
+        //用这个就是能最后限定长度，就很nice
+    }
+}
+//蛇的移动依赖于赋值，删除，赋值删除
+//删除掉原来的蛇，保存现在的蛇
+void DeleteSnake(){
+    int i;
+    for (i = 0; ArrSnake[i][0]!=0; i++)
+    {
+        strncpy(&MyBackGround[ArrSnake[i][0]][ArrSnake[i][1]],"  ",2);
+    }
+}
+void MoveSnake(){
+    int i=SnakeMaxLength-1;
+    ArrSnake[0][2]=SnakeDirection;
+    for ( ; i > 0; i--)//过滤零
+    {
+        if(ArrSnake[i][0]==0)continue;
+        ArrSnake[i][0]=ArrSnake[i-1][0];
+        ArrSnake[i][1]=ArrSnake[i-1][1];
+        ArrSnake[i][2]=ArrSnake[i-1][2];
+    }
+    //蛇头
+    if(go_east==ArrSnake[0][2]||go_west==ArrSnake[0][2])ArrSnake[0][1]+=ArrSnake[0][2];
+    else ArrSnake[0][0]+=ArrSnake[0][2];
+}
+//控制蛇的方向
+//Asyn的函数块，异步的意思，老规矩，可以百度百科学习法
+//如 果 每次 都要 回车 太没意思 或者其他函数 还是有 一定延迟 这个函数非常银杏
+void ControlSnake(){
+    if(GetAsyncKeyState('W'))
+    {
+        if(SnakeDirection!=go_south)
+        SnakeDirection=go_north;
+    }
+    else if (GetAsyncKeyState('S'))
+    {
+        if(SnakeDirection!=go_north)
+        SnakeDirection=go_south;
+    }
+    else if (GetAsyncKeyState('A'))
+    {
+        if(SnakeDirection!=go_west)
+        SnakeDirection=go_east;
+    }
+    else if (GetAsyncKeyState('D'))
+    {
+        if(SnakeDirection!=go_east)
+        SnakeDirection=go_west;
+    }
+}
+booleen IsSnakeAlive(){
+    if(strncmp(&MyBackGround[ArrSnake[0][0]][ArrSnake[0][1]],"■",2)==0)return false;
+    /*strncmp函数的功能比较
+        （1）strncmp函数
+        用来比较s1和s2字符串的前n个字符。如果两个字符串相等的话，strncmp将返回0(可以用来判断蛇是否还活着)。如果s1是s2的一个子串的话，s1小于s2。可以限定长度
+        （2）strcmp函数
+        同样用于比较两个字符串 ，设这两个字符串为str1，str2。若str1==str2，则返回零；若str1 > str2，则返回正数；若str1< str2，则返回负数。
+        参考资料来源：搜狗百科—strncm*/
+    else return true;
+    //蛇头撞墙和自身的情况
+}
+void ProduceFood()
+{
+    //蛇的坐标
+    int i;
+    srand(time(NULL));
+    //给蛇坐标
+    if(OptionFoodAlive==true) return;//如果食物还存在不生成食物
+    while(1)
+    {
+        booleen tempbool =true;
+        x=rand()%18+1;
+        y=rand()%18+1;
+        for(i=1;i<ArrSnake[i][0];i++){
+            if (x==ArrSnake[i][0]&&2*y==ArrSnake[i][1])
+            {
+                tempbool = false;
+                break;//生成在蛇身上的情况
+            }
+        }
+        if(true==tempbool)
+        {
+                break;
+        }
+    }
+    strncpy(&MyBackGround[x][y*2],"※",2);
+    OptionFoodAlive = true;
+}
+//吃了就长（身高矮的yyx表示很淦）
+void LengthenSnake(){
+    int i=0;
+    if (ArrSnake[0][0]==x&&ArrSnake[0][1]==y*2)
+    {
+        OptionFoodAlive = false;
+        for ( ; ; i++)
+        {
+            if (ArrSnake[i][0]==0)
+            {
+                if(ArrSnake[i][2]==go_north||ArrSnake[i][2]==go_north)
+                {
+                    ArrSnake[i][0]=ArrSnake[i-1][0]-ArrSnake[i-1][2];
+                    ArrSnake[i][1]=ArrSnake[i-1][1];
+                    ArrSnake[i][2]=ArrSnake[i-1][2];
+                }
+                else
+                {
+                    ArrSnake[i][0]=ArrSnake[i-1][0];
+                    ArrSnake[i][1]=ArrSnake[i][1]-ArrSnake[i][2];
+                    ArrSnake[i][2]=ArrSnake[i][2];
+                }
+                break;
+            }
+        }
+    }
+}
